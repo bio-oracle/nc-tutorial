@@ -1,0 +1,146 @@
+<!doctype html>
+<html>
+<head>
+<meta charset='UTF-8'><meta name='viewport' content='width=device-width initial-scale=1'>
+<title>README</title>
+</head>
+<body><!-- README.md is generated from README.Rmd. Please edit that file -->
+<h1 id='transform-bio-oracle-netcdf-files-into-geotiff'>Transform Bio-Oracle NetCDF files into GeoTIFF</h1>
+<!-- badges: start -->
+<!-- badges: end -->
+<p>Bio-Oracle layers are natively developed in NetCDF format. This short
+tutorial shows how to turn into GeoTIFF in R and Python.</p>
+<p>As an example, we will download the <a href='https://bio-oracle.org/downloads-to-email-v3.php'>surface Ocean Temperature layer
+from Bio-Oracle</a>,
+predicted for the decade of 2090 to 2100 using the Shared Socioeconomic
+Pathway scenario ssp585. Here below you can find a direct link to
+download.</p>
+<p><a href='https://erddap.bio-oracle.org/erddap/griddap/thetao_ssp585_2020_2100_depthsurf.nc?thetao_mean%5B(2090-01-01):1:(2090-01-01T00:00:00Z)%5D%5B(-90.0):1:(90.0)%5D%5B(-180.0):1:(180.0)%5D'><strong>Download Bio-Oracle Ocean Temperature
+Layer</strong></a></p>
+<p>Save the layer in a folder named <code>data</code> and name it as <code>bo.nc</code>.</p>
+<h1 id='netcdf-to-geotiff-in-r'>NetCDF to GeoTIFF in R</h1>
+<p>There are several ways of turning a NetCDF file into GeoTIFF. Here we
+show how to do it with two of the most common packages for dealing with
+raster data.</p>
+<h2 id='using-terra'>Using terra</h2>
+<pre><code class='language-r' lang='r'># Install required package
+# You can install them using: install.packages(&quot;terra&quot;)
+library(terra)
+#&gt; terra 1.7.55
+
+# Path to the Bio-Oracle layer file
+nc_path &lt;- &quot;./data/bo.nc&quot;
+
+# Read layer
+bo &lt;- rast(nc_path)
+
+# Inspect file
+bo
+#&gt; class       : SpatRaster 
+#&gt; dimensions  : 3600, 7200, 1  (nrow, ncol, nlyr)
+#&gt; resolution  : 0.05, 0.05  (x, y)
+#&gt; extent      : -180, 180, -90, 90  (xmin, xmax, ymin, ymax)
+#&gt; coord. ref. : lon/lat WGS 84 
+#&gt; source      : bo.nc 
+#&gt; varname     : thetao_mean (Average OceanTemperature) 
+#&gt; name        : thetao_mean 
+#&gt; unit        :    degree_C 
+#&gt; time        : 2090-01-01 UTC
+
+# Plot
+plot(bo)
+</code></pre>
+<p><img src="README_files/figure-gfm/terra-1.png" referrerpolicy="no-referrer"><!-- --></p>
+<pre><code class='language-r' lang='r'>
+# Write as GeoTIFF
+writeRaster(bo, &quot;./data/bo_terra.tif&quot;)
+</code></pre>
+<h2 id='using-stars'>Using stars</h2>
+<pre><code class='language-r' lang='r'># Install required package
+# You can install them using: install.packages(&quot;stars&quot;)
+library(stars)
+#&gt; Loading required package: abind
+#&gt; Loading required package: sf
+#&gt; Linking to GEOS 3.10.2, GDAL 3.4.1, PROJ 8.2.1; sf_use_s2() is TRUE
+
+# Path to the Bio-Oracle layer file
+nc_path &lt;- &quot;./data/bo.nc&quot;
+
+# Read layer
+bo &lt;- read_stars(nc_path)
+
+# Inspect file
+bo
+#&gt; stars object with 3 dimensions and 1 attribute
+#&gt; attribute(s), summary of first 1e+05 cells:
+#&gt;                 Min.   1st Qu.  Median     Mean 3rd Qu.     Max.
+#&gt; bo.nc [°C] 0.8729433 0.9850401 1.13016 1.158159 1.32125 1.593663
+#&gt; dimension(s):
+#&gt;      from   to         offset delta  refsys x/y
+#&gt; x       1 7200           -180  0.05      NA [x]
+#&gt; y       1 3600             90 -0.05      NA [y]
+#&gt; time    1    1 2090-01-01 UTC    NA POSIXct
+
+# Plot
+plot(bo)
+#&gt; downsample set to 7
+</code></pre>
+<p><img src="README_files/figure-gfm/stars-1.png" referrerpolicy="no-referrer"><!-- --></p>
+<pre><code class='language-r' lang='r'>
+# Write as GeoTIFF
+write_stars(bo, &quot;./data/bo_stars.tif&quot;)
+</code></pre>
+<h1 id='netcdf-to-geotiff-in-python'>NetCDF to GeoTIFF in Python</h1>
+<pre><code class='language-python' lang='python'># Install required packages
+# You can install them using: pip install xarray rioxarray matplotlib
+import xarray as xr
+import rioxarray
+import matplotlib.pyplot as plt
+
+# Path to the Bio-Oracle layer file
+nc_path = &quot;./data/bo.nc&quot;
+
+# Read layer
+bo = xr.open_dataset(nc_path)
+#&gt; /usr/lib/python3/dist-packages/scipy/__init__.py:146: UserWarning: A NumPy version &gt;=1.17.3 and &lt;1.25.0 is required for this version of SciPy (detected version 1.26.2
+#&gt;   warnings.warn(f&quot;A NumPy version &gt;={np_minversion} and &lt;{np_maxversion}&quot;
+
+# Inspect file
+print(bo)
+#&gt; &lt;xarray.Dataset&gt;
+#&gt; Dimensions:      (time: 1, latitude: 3600, longitude: 7200)
+#&gt; Coordinates:
+#&gt;   * time         (time) datetime64[ns] 2090-01-01
+#&gt;   * latitude     (latitude) float32 -89.97 -89.93 -89.88 ... 89.88 89.93 89.97
+#&gt;   * longitude    (longitude) float32 -180.0 -179.9 -179.9 ... 179.9 179.9 180.0
+#&gt; Data variables:
+#&gt;     thetao_mean  (time, latitude, longitude) float64 ...
+#&gt; Attributes: (12/39)
+#&gt;     cdm_data_type:                             Grid
+#&gt;     comment:                                   Uses attributes recommended by...
+#&gt;     Conventions:                               CF-1.5
+#&gt;     creator_name:                              Bio-Oracle consortium: https:/...
+#&gt;     creator_url:                               https://www.bio-oracle.org
+#&gt;     Easternmost_Easting:                       179.975
+#&gt;     ...                                        ...
+#&gt;     standard_name_vocabulary:                  CF Standard Name Table v70
+#&gt;     summary:                                   Uses attributes recommended by...
+#&gt;     time_coverage_end:                         2090-01-01T00:00:00Z
+#&gt;     time_coverage_start:                       2090-01-01T00:00:00Z
+#&gt;     title:                                     Bio-Oracle OceanTemperature [d...
+#&gt;     Westernmost_Easting:                       -179.975
+
+# Extract the variable data that you want to convert to GeoTIFF
+variable_data = bo[&quot;thetao_mean&quot;]
+
+# Plot
+variable_data.plot()
+plt.show()
+</code></pre>
+<p><img src="README_files/figure-gfm/xarray-1.png" width="614" /></p>
+<pre><code class='language-python' lang='python'>
+# Write as GeoTIFF using rioxarray
+variable_data.rio.to_raster(&quot;./data/bo_xarray.tif&quot;)
+</code></pre>
+</body>
+</html>
