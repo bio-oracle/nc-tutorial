@@ -1,0 +1,106 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Transform Bio-Oracle NetCDF files into GeoTIFF
+
+<!-- badges: start -->
+
+<!-- badges: end -->
+
+Bio-Oracle layers are natively developed in NetCDF format. This short tutorial shows how to turn into GeoTIFF in R and Python.
+
+As an example, we will download the [surface Ocean Temperature layer from Bio-Oracle](https://bio-oracle.org/downloads-to-email-v3.php), predicted for the decade of 2090 to 2100 using the Shared Socioeconomic Pathway scenario ssp585. Here below you can find a direct link to download.
+
+[**Download Bio-Oracle Ocean Temperature Layer**](https://erddap.bio-oracle.org/erddap/griddap/thetao_ssp585_2020_2100_depthsurf.nc?thetao_mean[(2090-01-01):1:(2090-01-01T00:00:00Z)][(-90.0):1:(90.0)][(-180.0):1:(180.0)])
+
+Save the layer in a folder named `data` and name it as `bo.nc`.
+
+# NetCDF to GeoTIFF in R
+
+There are several ways of turning a NetCDF file into GeoTIFF. Here we show how to do it with two of the most common packages for dealing with raster data.
+
+## Using terra
+
+```{r terra}
+# Install required package
+# You can install them using: install.packages("terra")
+library(terra)
+
+# Path to the Bio-Oracle layer file
+nc_path <- "./data/bo.nc"
+
+# Read layer
+bo <- rast(nc_path)
+
+# Inspect file
+bo
+
+# Plot
+plot(bo)
+
+# Write as GeoTIFF
+writeRaster(bo, "./data/bo_terra.tif")
+```
+
+## Using stars
+
+```{r stars}
+# Install required package
+# You can install them using: install.packages("stars")
+library(stars)
+
+# Path to the Bio-Oracle layer file
+nc_path <- "./data/bo.nc"
+
+# Read layer
+bo <- read_stars(nc_path)
+
+# Inspect file
+bo
+
+# Plot
+plot(bo)
+
+# Write as GeoTIFF
+write_stars(bo, "./data/bo_stars.tif")
+```
+
+
+# NetCDF to GeoTIFF in Python
+
+```{python xarray}
+# Install required packages
+# You can install them using: pip install xarray rioxarray matplotlib
+import xarray as xr
+import rioxarray
+import matplotlib.pyplot as plt
+
+# Path to the Bio-Oracle layer file
+nc_path = "./data/bo.nc"
+
+# Read layer
+bo = xr.open_dataset(nc_path)
+
+# Inspect file
+print(bo)
+
+# Extract the variable data that you want to convert to GeoTIFF
+variable_data = bo["thetao_mean"]
+
+# Plot
+variable_data.plot()
+plt.show()
+
+# Write as GeoTIFF using rioxarray
+variable_data.rio.to_raster("./data/bo_xarray.tif")
+```
